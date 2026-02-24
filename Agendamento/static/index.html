@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>PedroBarbearia 💈</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "Inter", sans-serif;
+    background: #000;
+    color: #fff;
+    scroll-behavior: smooth;
+  }
+
+  /* animações em tudo */
+  button, a { transition: all .25s ease; }
+
+  header{
+    position: fixed;
+    width: 100%;
+    padding: 25px 80px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(10px);
+    z-index:100;
+  }
+  header h2{
+    font-family:"Playfair Display", serif;
+    font-size:24px;
+    color:#c89b3c;
+    letter-spacing:2px;
+  }
+
+  .hero{
+    height:100vh;
+    background:url("https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+  }
+  .overlay{
+    height:100%;
+    background: rgba(0,0,0,.88);
+    display:flex;
+    align-items:center;
+    padding-left: 100px;
+  }
+  .hero-text{ max-width:650px; animation: fadeUp 1.1s ease; }
+  @keyframes fadeUp { from{opacity:0; transform:translateY(30px)} to{opacity:1; transform:translateY(0)} }
+
+  .hero-text p{
+    color:#c89b3c;
+    letter-spacing:3px;
+    font-size:12px;
+    margin-bottom:20px;
+  }
+  .hero-text h1{
+    font-family:"Playfair Display", serif;
+    font-size:72px;
+    line-height:1.1;
+    color: transparent;
+    -webkit-text-stroke: 2px #c89b3c;
+    text-shadow: 0 0 20px rgba(200,155,60,.4);
+  }
+
+  .btn-main{
+    margin-top:35px;
+    background:#c89b3c;
+    padding:15px 35px;
+    border-radius:8px;
+    font-weight:700;
+    color:#000;
+    border:none;
+    cursor:pointer;
+  }
+  .btn-main:hover{ transform: scale(1.08); box-shadow: 0 0 25px rgba(200,155,60,.7); }
+  .btn-main:active{ transform: scale(.95); }
+
+  #agendamento{
+    background:#111;
+    padding: 140px 0;
+    display:flex;
+    justify-content:center;
+  }
+
+  .wrap{
+    width: 520px;
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+
+  /* ✅ MENSAGEM FORA DO CARD (NÃO RESETA) */
+  .toast {
+    border-radius: 12px;
+    padding: 14px 14px;
+    border: 1px solid #333;
+    background: rgba(28,28,28,.9);
+    box-shadow: 0 14px 35px rgba(0,0,0,.45);
+    min-height: 54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 800;
+    text-align:center;
+    letter-spacing: .2px;
+  }
+  .toast.hidden { display:none; }
+  .toast.success {
+    border-color:#c89b3c;
+    color:#c89b3c;
+    background: rgba(200,155,60,.12);
+  }
+  .toast.error {
+    border-color:#ff3b3b;
+    color:#ff3b3b;
+    background: rgba(255,0,0,.12);
+  }
+
+  .card{
+    background:#1c1c1c;
+    border:1px solid #c89b3c;
+    border-radius:20px;
+    padding:40px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.8);
+    opacity:0;
+    transform: translateY(60px);
+    transition: 1s ease;
+  }
+  .card.show{ opacity:1; transform: translateY(0); }
+
+  .card h2{
+    font-family:"Playfair Display", serif;
+    color:#c89b3c;
+    text-align:center;
+    margin-bottom:20px;
+  }
+
+  label{ display:block; font-weight:800; margin-top:12px; }
+  input, select{
+    width:100%;
+    padding:10px;
+    margin-top:6px;
+    border-radius:8px;
+    border:1px solid #444;
+    background:#222;
+    color:#fff;
+  }
+
+  .horarios{
+    margin-top:18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .horarios button{
+    flex: 1 1 30%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #c89b3c;
+    background: transparent;
+    color:#c89b3c;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .horarios button:hover{ background:#c89b3c; color:#000; transform: scale(1.06); }
+  .horarios button:active{ transform: scale(.92); }
+  .ocupado{
+    background:#333 !important;
+    color:#777 !important;
+    border-color:#444 !important;
+    cursor:not-allowed;
+    transform:none !important;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>PedroBarbearia</h2>
+</header>
+
+<section class="hero">
+  <div class="overlay">
+    <div class="hero-text">
+      <p>BARBEARIA PREMIUM</p>
+      <h1>Corte preciso.<br>Estilo atemporal.</h1>
+      <button type="button" class="btn-main" onclick="scrollAgendamento()">AGENDAR AGORA</button>
+    </div>
+  </div>
+</section>
+
+<section id="agendamento">
+  <div class="wrap">
+
+    <!-- ✅ confirmação fica aqui e NÃO some -->
+    <div id="toast" class="toast hidden"></div>
+
+    <div class="card" id="cardAgendamento">
+      <h2>Agendar Horário 💈</h2>
+
+      <label>Seu nome</label>
+      <input id="cliente" placeholder="Ex: Pedro">
+
+      <label>Barbeiro</label>
+      <select id="barbeiros" onchange="carregarServicos(); atualizarHorarios();"></select>
+
+      <label>Serviço</label>
+      <select id="servicos"></select>
+
+      <label>Dia</label>
+      <input type="date" id="dia" onchange="atualizarHorarios()">
+
+      <div class="horarios" id="horarios"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const API = "http://127.0.0.1:8000";
+  const horariosFixos = ["09:00","10:00","11:00","14:00","15:00"];
+
+  function scrollAgendamento(){
+    document.getElementById("agendamento").scrollIntoView({behavior:"smooth"});
+  }
+
+  // anima card
+  window.addEventListener("scroll", () => {
+    const card = document.getElementById("cardAgendamento");
+    const pos = card.getBoundingClientRect().top;
+    if (pos < window.innerHeight - 120) card.classList.add("show");
+  });
+
+  // ✅ toast persistente
+  function showToast(type, text) {
+    const toast = document.getElementById("toast");
+    toast.className = "toast " + type;
+    toast.textContent = text;
+    toast.classList.remove("hidden");
+
+    // salva para nunca sumir mesmo se "resetar" o UI
+    localStorage.setItem("pb_toast_type", type);
+    localStorage.setItem("pb_toast_text", text);
+  }
+
+  function restoreToast() {
+    const type = localStorage.getItem("pb_toast_type");
+    const text = localStorage.getItem("pb_toast_text");
+    if (type && text) showToast(type, text);
+  }
+
+  async function carregarBarbeiros(){
+    const res = await fetch(API + "/barbeiros");
+    const barbeiros = await res.json();
+
+    const select = document.getElementById("barbeiros");
+    select.innerHTML = "";
+
+    barbeiros.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b.id;
+      opt.textContent = b.nome;
+      select.appendChild(opt);
+    });
+
+    await carregarServicos();
+  }
+
+  async function carregarServicos(){
+    const barbeiroId = document.getElementById("barbeiros").value;
+
+    const res = await fetch(API + "/services");
+    const servicos = await res.json();
+
+    const select = document.getElementById("servicos");
+    select.innerHTML = "";
+
+    servicos
+      .filter(s => String(s.barbeiro_id) === String(barbeiroId))
+      .forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = s.nome + " (" + s.duracao_minutos + "min)";
+        select.appendChild(opt);
+      });
+  }
+
+  async function atualizarHorarios(){
+    const dia = document.getElementById("dia").value;
+    const barbeiroId = document.getElementById("barbeiros").value;
+    const div = document.getElementById("horarios");
+
+    // só limpa os botões (não mexe no toast)
+    div.innerHTML = "";
+    if (!dia) return;
+
+    const res = await fetch(API + "/agendamentos");
+    const agendamentos = await res.json();
+
+    horariosFixos.forEach(hora => {
+      const ocupado = agendamentos.find(a =>
+        String(a.barbeiro_id) === String(barbeiroId) &&
+        String(a.starts_at).startsWith(dia) &&
+        String(a.starts_at).includes(hora)
+      );
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = hora;
+
+      if (ocupado) {
+        btn.classList.add("ocupado");
+        btn.disabled = true;
+      } else {
+        btn.onclick = () => agendarHorario(hora);
+      }
+
+      div.appendChild(btn);
+    });
+  }
+
+  async function agendarHorario(hora){
+    const cliente = document.getElementById("cliente").value.trim();
+    const dia = document.getElementById("dia").value;
+    const serviceId = document.getElementById("servicos").value;
+
+    if (!cliente || !dia) {
+      showToast("error", "Preencha seu nome e selecione o dia.");
+      return;
+    }
+
+    const response = await fetch(API + "/agendar", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        cliente: cliente,
+        horario: dia + "T" + hora + ":00",
+        service_id: parseInt(serviceId)
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      showToast("success", "✅ Horário confirmado às " + hora + "!");
+      // atualiza só botões, toast fica
+      await atualizarHorarios();
+      return;
+    }
+
+    if (data.erro) {
+      showToast("error", "❌ " + data.erro);
+      return;
+    }
+
+    showToast("error", "❌ Erro inesperado no servidor.");
+  }
+
+  // init
+  restoreToast();
+  carregarBarbeiros();
+</script>
+
+</body>
+</html>
